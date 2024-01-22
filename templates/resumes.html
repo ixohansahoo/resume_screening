@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Turtles - Resumes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Form for entering text -->
+        <form method="POST" action="{{ url_for('process_text') }}">
+            <label for="input_text">Enter Tags:</label>
+            <textarea name="input_text" id="input_text" rows="4" cols="50" placeholder="Enter tags here..."></textarea>
+            <button type="submit">Search the best match</button>
+        </form>
+
+        {% if entered_tags %}
+        <div class="entered-tags">
+            <p>Entered Tags:</p>
+            <ul>
+                {% for tag in entered_tags %}
+                <li>{{ tag }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if filenames_list and rankings_list %}
+        <div>
+            <p>Resume & Ranks:</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Resume</th>
+                        <th>Match</th>
+                        <th>Open resume</th>
+                        <th>Schedule meeting</th>
+                        <th>matched tags</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Inside the table body -->
+                    {% for i in range(filenames_list|length) %}
+                    <tr>
+                        <td>{{ filenames_list[i] }}</td>
+                        <td>{{ rankings_list[i] }}</td>
+                        <td>
+                            <button type="button" onclick="openResume('{{ filenames_list[i] }}')">Open</button>
+                        </td>
+                        <td>
+                            <!-- Add the Send button here -->
+                            <button type="button"
+                                onclick="acceptResume('{{ filenames_list[i] }}', '{{ url_for('static', filename='files/') }}' + '{{ filenames_list[i] }}')">Send mail</button>
+                        </td>
+                        <td>{{ matched_tags[i] | join(', ') }}</td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <script>
+        function openResume(filename) {
+            // Create a link with the appropriate file path
+            var link = document.createElement('a');
+            link.href = "{{ url_for('static', filename='files/') }}" + filename;
+            link.target = '_blank'; // Open the link in a new tab/window
+
+            // Trigger a click on the link
+            var event = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+            });
+            link.dispatchEvent(event);
+        }
+
+        function acceptResume(filename, filepath) {
+            // Open the interview details page in a new window
+            var interviewWindow = window.open('/interview_form', 'Interview Details');
+
+            // Handle messages from the interview details page
+            window.addEventListener('message', function (event) {
+                if (event.data.type === 'interviewDetails') {
+                    // Perform actions with the interview details
+                    var interviewDetails = event.data;
+                    console.log('Received interview details:', interviewDetails);
+
+                    // Close the interview details window
+                    interviewWindow.close();
+
+                    // Make an AJAX request to the server to handle the acceptance
+                    fetch(`/accept?filename=${encodeURIComponent(filename)}&filepath=${encodeURIComponent(filepath)}&interview_date=${interviewDetails.interviewDate}&interview_time=${interviewDetails.interviewTime}&interview_link=${interviewDetails.interviewLink}`, {
+                        method: 'GET', // or 'POST' if your server expects a POST request
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Handle the response from the server
+                            alert(data.message);
+                            // You can add more logic here if needed
+                        })
+                        .catch(error => {
+                            // Handle errors if any
+                            console.error('Error:', error);
+                        });
+                }
+            });
+        }
+
+
+
+
+        function rejectResume(filename, filepath) {
+            // Make an AJAX request to the '/reject' endpoint on the server with the filename parameter
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "{{ url_for('accept') }}?filename=" + encodeURIComponent(filename) + "&filepath=" + encodeURIComponent(filepath), true);
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    // The request was successful, handle the response if needed
+                    alert('Reject resume: ' + filename + ' at path: ' + filepath);
+                    // You can add more logic here if needed
+                }
+            };
+
+            // Send the request
+            xhr.send();
+        }
+    </script>
+</body>
+
+</html>

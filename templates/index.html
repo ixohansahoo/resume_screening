@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Turtles</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div id="video-container">
+        <video autoplay muted loop id="background-video">
+            <source src="{{ url_for('static', filename='rvid.mp4') }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="overlay"></div>
+    </div>
+    <header>
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='download.png') }}" alt="Logo">
+        </div>
+    </header>
+
+    <div class="container">
+
+        <form method='POST' enctype='multipart/form-data'>
+            <h1>Add File In Database</h1>
+            {{ form.hidden_tag() }}
+            <label for="file">Choose File</label>
+            <input type="file" name="file" id="file" onchange="displayFileName(this)">
+            <button type="submit">Upload File</button>
+        </form>
+
+        <a href="{{ url_for('find_resume') }}" class="btn btn-primary">Find Best Resume</a>
+
+        <div class="additional-elements">
+            <h3 id="tx">Discover the Best Talents</h3>
+        </div>
+
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="flash-message">
+            <span>{{ messages[0] }}</span>
+            <button class="close-flash" onclick="closeFlashMessage(this)">Close</button>
+        </div>
+    {% endif %}
+{% endwith %}
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        function displayFileName(input) {
+            var filename = input.files[0].name;
+            document.getElementById('file-name').value = filename;
+
+            var dialogBox = document.getElementById('dialog-box');
+            dialogBox.style.display = 'block';
+        }
+
+        function closeDialogBox() {
+            var dialogBox = document.getElementById('dialog-box');
+            dialogBox.style.display = 'none';
+        }
+
+        window.closeFlashMessage = function(button) {
+            var flashMessage = button.parentElement;
+            flashMessage.style.display = 'none';
+        };
+    });
+</script>
+
+
+</body>
+
+</html>
